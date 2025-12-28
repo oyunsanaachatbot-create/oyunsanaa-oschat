@@ -63,21 +63,30 @@ export async function createUser(email: string, password: string) {
 }
 
 export async function createGuestUser() {
-  const email = `guest-${Date.now()}`;
+  // Давхцахгүй email (UUID ашиглана)
+  const email = `guest-${generateUUID()}@guest.local`;
   const password = generateHashedPassword(generateUUID());
 
   try {
-    return await db.insert(user).values({ email, password }).returning({
+    const rows = await db.insert(user).values({ email, password }).returning({
       id: user.id,
       email: user.email,
     });
-  } catch (_error) {
+
+    // safety: хоосон ирвэл null буцаая
+    if (!rows?.length) return [];
+
+    return rows;
+  } catch (error) {
+    // ✅ бодит шалтгааныг Vercel log дээр гаргана
+    console.error("[createGuestUser] insert failed", error);
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create guest user"
     );
   }
 }
+
 
 export async function saveChat({
   id,
