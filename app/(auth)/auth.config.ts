@@ -1,13 +1,20 @@
 import type { NextAuthConfig } from "next-auth";
 
 export const authConfig = {
+  // ✅ Vercel / production дээр заавал хэрэгтэй (cookie decrypt/verify)
+  secret: process.env.AUTH_SECRET,
+
+  // ✅ Proxy/host дээр ажиллуулахад хэрэгтэй байдаг (Vercel дээр safe)
+  trustHost: true,
+
   pages: {
     signIn: "/login",
     newUser: "/",
   },
+
   providers: [
-    // added later in auth.ts since it requires bcrypt which is only compatible with Node.js
-    // while this file is also used in non-Node.js environments
+    // providers-оо auth.ts дээр нэмнэ (bcrypt node-only)
   ],
+
   callbacks: {},
 } satisfies NextAuthConfig;
