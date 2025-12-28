@@ -4,17 +4,17 @@ import { auth } from "@/app/(auth)/auth";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Healthcheck
+  // health check
   if (pathname.startsWith("/ping")) {
     return new Response("pong", { status: 200 });
   }
 
-  // Auth route-уудыг оролдохгүй нэвтрүүлнэ
+  // auth route-уудыг middleware оролдохгүй
   if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
-  // Public файлууд
+  // static / public
   if (
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico" ||
@@ -24,10 +24,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Session шалгана (getToken биш)
+  // session шалгана (getToken хэрэглэхгүй)
   const session = await auth();
 
-  // Нэвтрээгүй бол guest route руу явуулна
+  // нэвтрээгүй бол guest рүү явуулна
   if (!session) {
     const redirectUrl = encodeURIComponent(request.url);
     return NextResponse.redirect(
