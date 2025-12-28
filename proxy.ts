@@ -1,40 +1,38 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { guestRegex, isDevelopmentEnvironment } from "./lib/constants";
+import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "@/app/(auth)/auth";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  /*
-   * Playwright starts the dev server and requires a 200 status to
-   * begin the tests, so this ensures that the tests can start
-   */
+  // Healthcheck
   if (pathname.startsWith("/ping")) {
     return new Response("pong", { status: 200 });
   }
 
+  // Auth route-уудыг оролдохгүй нэвтрүүлнэ
   if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET,
-    secureCookie: !isDevelopmentEnvironment,
-  });
+  // Public файлууд
+  if (
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml"
+  ) {
+    return NextResponse.next();
+  }
 
-  if (!token) {
+  // Session шалгана (getToken биш)
+  const session = await auth();
+
+  // Нэвтрээгүй бол guest route руу явуулна
+  if (!session) {
     const redirectUrl = encodeURIComponent(request.url);
-
     return NextResponse.redirect(
       new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
     );
-  }
-
-  const isGuest = guestRegex.test(token?.email ?? "");
-
-  if (token && !isGuest && ["/login", "/register"].includes(pathname)) {
-    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
@@ -43,17 +41,10 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
-    "/chat/:id",
+    "/chat/:path*",
     "/api/:path*",
     "/login",
     "/register",
-
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
     "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };
