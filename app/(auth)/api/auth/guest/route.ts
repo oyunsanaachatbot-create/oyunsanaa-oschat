@@ -6,11 +6,9 @@ export async function GET(request: Request) {
   const redirectUrl = searchParams.get("redirectUrl") || "/";
 
   const session = await auth();
-
   if (session) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // IMPORTANT: signIn нь Route Handler дээр Response буцаадаг
   return signIn("guest", { redirectTo: redirectUrl });
 }
