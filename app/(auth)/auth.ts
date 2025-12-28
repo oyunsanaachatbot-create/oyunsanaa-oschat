@@ -87,20 +87,19 @@ export const {
 
 
   callbacks: {
-    jwt: ({ token, user }) => {
-      if (user) {
-        token.id = user.id as string;
-        token.type = user.type;
-      }
-      return token;
-    },
-
-    session: ({ session, token }) => {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.type = token.type;
-      }
-      return session;
-    },
+  jwt: ({ token, user }) => {
+    if (user) {
+      token.id = String(user.id);
+      token.type = user.type;
+    }
+    return token;
   },
-});
+
+  session: ({ session, token }) => {
+    if (session.user) {
+      session.user.id = String(token.id);
+      session.user.type = token.type as "guest" | "regular";
+    }
+    return session;
+  },
+},
