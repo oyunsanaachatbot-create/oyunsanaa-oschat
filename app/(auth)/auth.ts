@@ -66,14 +66,18 @@ export const {
       },
     }),
     Credentials({
-      id: "guest",
-      credentials: {},
-      async authorize() {
-        const [guestUser] = await createGuestUser();
-        return { ...guestUser, type: "guest" };
-      },
-    }),
-  ],
+  id: "guest",
+  credentials: {},
+  async authorize() {
+    const rows = await createGuestUser();
+    const guestUser = rows?.[0];
+
+    if (!guestUser) return null;
+
+    return { ...guestUser, type: "guest" as const };
+  },
+}),
+
   callbacks: {
     jwt({ token, user }) {
       if (user) {
