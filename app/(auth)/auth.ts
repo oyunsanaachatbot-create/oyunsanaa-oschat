@@ -62,36 +62,37 @@ export const {
           return null;
         }
 
-        return { ...user, type: "regular" };
+        return { ...user, type: "regular" as const };
       },
     }),
+
     Credentials({
-  id: "guest",
-  credentials: {},
-  async authorize() {
-    const rows = await createGuestUser();
-    const guestUser = rows?.[0];
-
-    if (!guestUser) return null;
-
-    return { ...guestUser, type: "guest" as const };
-  },
-}),
+      id: "guest",
+      credentials: {},
+      async authorize() {
+        const rows = await createGuestUser();
+        const guestUser = rows?.[0];
+        if (!guestUser) return null;
+        return { ...guestUser, type: "guest" as const };
+      },
+    }),
+  ],
 
   callbacks: {
-  jwt: ({ token, user }) => {
-    if (user) {
-      token.id = user.id as string;
-      token.type = user.type;
-    }
-    return token;
-  },
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.id = user.id as string;
+        token.type = user.type;
+      }
+      return token;
+    },
 
-  session: ({ session, token }) => {
-    if (session.user) {
-      session.user.id = token.id as string;
-      session.user.type = token.type;
-    }
-    return session;
+    session: ({ session, token }) => {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.type = token.type;
+      }
+      return session;
+    },
   },
-},
+});
