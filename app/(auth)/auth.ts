@@ -66,17 +66,25 @@ export const {
       },
     }),
 
-    Credentials({
-      id: "guest",
-      credentials: {},
-      async authorize() {
-        const rows = await createGuestUser();
-        const guestUser = rows?.[0];
-        if (!guestUser) return null;
-        return { ...guestUser, type: "guest" as const };
-      },
-    }),
-  ],
+   Credentials({
+  id: "guest",
+  credentials: {},
+  async authorize() {
+    const rows = await createGuestUser();
+    const guestUser = rows?.[0];
+
+    if (!guestUser?.id) {
+      throw new Error("Guest user creation failed");
+    }
+
+    return {
+      id: String(guestUser.id),   // 🔥 заавал string
+      email: guestUser.email,
+      type: "guest",
+    };
+  },
+}),
+
 
   callbacks: {
     jwt: ({ token, user }) => {
