@@ -38,6 +38,7 @@ export const {
   signOut,
 } = NextAuth({
   ...authConfig,
+
   providers: [
     Credentials({
       credentials: {},
@@ -66,40 +67,41 @@ export const {
       },
     }),
 
-   Credentials({
-  id: "guest",
-  credentials: {},
-  async authorize() {
-    const rows = await createGuestUser();
-    const guestUser = rows?.[0];
+    Credentials({
+      id: "guest",
+      credentials: {},
+      async authorize() {
+        const rows = await createGuestUser();
+        const guestUser = rows?.[0];
 
-    if (!guestUser?.id) {
-      throw new Error("Guest user creation failed");
-    }
+        if (!guestUser?.id) {
+          throw new Error("Guest user creation failed");
+        }
 
-    return {
-      id: String(guestUser.id),   // 🔥 заавал string
-      email: guestUser.email,
-      type: "guest",
-    };
-  },
-}),
-
+        return {
+          id: String(guestUser.id),
+          email: guestUser.email,
+          type: "guest" as const,
+        };
+      },
+    }),
+  ],
 
   callbacks: {
-  jwt: ({ token, user }) => {
-    if (user) {
-      token.id = String(user.id);
-      token.type = user.type;
-    }
-    return token;
-  },
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.id = String(user.id);
+        token.type = user.type;
+      }
+      return token;
+    },
 
-  session: ({ session, token }) => {
-    if (session.user) {
-      session.user.id = String(token.id);
-      session.user.type = token.type as "guest" | "regular";
-    }
-    return session;
+    session: ({ session, token }) => {
+      if (session.user) {
+        session.user.id = String(token.id);
+        session.user.type = token.type as UserType;
+      }
+      return session;
+    },
   },
-},
+});
